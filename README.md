@@ -3,7 +3,7 @@
 **Contribution Number:** [1]  
 **Student:** [Man Cao]  
 **Issue:** [https://github.com/orthogonalhq/nous-core/issues/287]  
-**Status:** [Phase I] [In Progress]
+**Status:** [Phase I] [Complete]
 
 ---
 
