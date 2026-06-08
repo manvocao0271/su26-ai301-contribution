@@ -1,15 +1,15 @@
-# Contribution [#]: [Issue Title]
+# Contribution [#287]: [Adapter: Amp]
 
-**Contribution Number:** [1 / 2 / 3]  
-**Student:** [Your Name]  
-**Issue:** [GitHub issue link]  
-**Status:** [Phase I / Phase II / Phase III / Phase IV] [In Progress / Complete]
+**Contribution Number:** [1]  
+**Student:** [Man Cao]  
+**Issue:** [https://github.com/orthogonalhq/nous-core/issues/287]  
+**Status:** [Phase I] [In Progress]
 
 ---
 
 ## Why I Chose This Issue
 
-[1-2 paragraphs explaining why this issue interests you, how it matches your skills/learning goals, what you hope to learn]
+I chose this issue because I found Nous to be quite interesting to learn from as a "good first issue". Nous is an AI personal assistant that lives on a user's local machine to help with daily tasks. I am developing my career as an AI engineer so I believe tackling this issue is a perfect fit for me. I also saw the issues page being relatively new and fresh on comments. It is likely that this issue will be assigned or at least easily reviewed since there is a low number of participants. This also makes the issue less complex in addition to the "acceptance criteria" that they attached to the issue.
 
 ---
 
