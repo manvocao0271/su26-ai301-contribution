@@ -37,19 +37,19 @@ I chose this issue because I found Nous to be quite interesting to learn from as
 
 ### Environment Setup
 
-[Notes on setting up your local development environment - challenges you faced, how you solved them]
+First time trying to open with dev containers had errors. Node.js and pnpm wasn't installed and the configuration files were not correctly set. Had to change @devcontainer.json with the feature configuration settings.
 
 ### Steps to Reproduce
 
-1. [Step 1]
-2. [Step 2]
-3. [Observed result]
+1. pnpm install & pnpm build, run web interface
+2. review localhost:4317
+3. A majority of the project is still in development (e.g. Dashboard, Org Chart, Inbox, etc.)
 
 ### Reproduction Evidence
 
-- **Commit showing reproduction:** [Link to commit in your fork]
+- **Commit showing reproduction:** [https://github.com/manvocao0271/nous-core/tree/fix-issue-agentadapter-amp]
 - **Screenshots/logs:** [If applicable]
-- **My findings:** [What you discovered during reproduction]
+- **My findings:** [Still have trouble with the CLI and the desktop app interface. Many of the features for the agent are still in production. Will talk with maintainer to get the latest production-ready code for further testing.]
 
 ---
 
@@ -57,24 +57,24 @@ I chose this issue because I found Nous to be quite interesting to learn from as
 
 ### Analysis
 
-[Your analysis of the root cause - what's causing the issue?]
+[Project list of coding agents is missing a specific implemention from Amp Code. Needs an adapter file to wire SDK hook.]
 
 ### Proposed Solution
 
-[High-level description of your fix approach]
+[Refer to already implemented adapters for other coding agents. Refer to Amp's own website for instructions how to set up implementation for local client. Use the current file structure for claude or codex when implementing the adapter for Amp.]
 
 ### Implementation Plan
 
 Using UMPIRE framework (adapted):
 
-**Understand:** [Restate the problem]
+**Understand:** [The project is missing an AgentAdapter for Amp (a coding agent).]
 
-**Match:** [What similar patterns/solutions exist in the codebase?]
+**Match:** [This is similar to the other AgentAdapers like Jetbrains, Gemini CLI, OpenClaw, Alibaba Qwen, etc.]
 
 **Plan:** [Step-by-step implementation plan]
-1. [Modify file X to do Y]
-2. [Add function Z]
-3. [Update tests]
+1. [Create file self/subcortex/coding-agents/src/amp-adapter.ts for Amp. Refer to similar files like claude-adapter.ts and codex-adapter.ts]
+2. [File should contain a Amp Agent SDK adapter that wraps Amp Agent SDK. Should run the coding agent task with functions like runAmpAgent, importAmpSdk, buildSdkHooks, extractFinalResponse]
+3. [Use pnpm test to validate input/output against Zod schemas. Write to self/subcortex/coding-agents/src/__tests__/]
 
 **Implement:** [Link to your branch/commits as you work]
 
