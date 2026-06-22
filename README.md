@@ -1,9 +1,9 @@
 # Contribution [#287]: [Adapter: Amp]
 
-**Contribution Number:** [1]  
+**Contribution Number:** [287]  
 **Student:** [Man Cao]  
 **Issue:** [https://github.com/orthogonalhq/nous-core/issues/287]  
-**Status:** [Phase I] [Complete]
+**Status:** [Phase III] [Complete]
 
 ---
 
@@ -17,19 +17,23 @@ I chose this issue because I found Nous to be quite interesting to learn from as
 
 ### Problem Description
 
-[In your own words, what's broken or missing?]
+Nous is missing a provider adapter for Amp, a session-bound CLI coding agent. Without it, Nous cannot dispatch tasks to Amp or route it through the model provider pipeline. The issue originally referenced the old `AgentAdapter` / `self/subcortex/coding-agents` path, but that path has been superseded — the current contract is the CLI provider leaf system under `self/subcortex/providers/src/providers/<vendor>/`.
 
 ### Expected Behavior
 
-[What should happen?]
+Amp should be a certified provider leaf that appears in `PROVIDER_DEFINITIONS`, resolves correctly through the adapter/registry pipeline, and can have tasks dispatched to it via the Amp CLI process (`amp`). It must declare `executionCapabilityProfile: 'session_bound_command'` so Cortex can enforce role compatibility at selection time.
 
 ### Current Behavior
 
-[What actually happens?]
+No Amp provider leaf exists. The provider catalog only contains `anthropic`, `openai`, and `ollama`.
 
 ### Affected Components
 
-[Which parts of the codebase are involved?]
+- `self/subcortex/providers/src/providers/` — new `amp/` leaf (definition, adapter, implementation, factory, index)
+- `self/subcortex/providers/src/schemas/provider-definition.ts` — schema extended with `ExecutionCapabilityProfileSchema`, `ProviderDefinitionLeaf` type, and optional `defaultEndpoint`/`defaultModelId` for CLI providers
+- `self/subcortex/providers/src/provider-identity.ts` — new file: central registry for deriving built-in provider IDs from vendor keys
+- Generated catalogs: `provider-definitions.ts`, `provider-adapters.ts`, `provider-factories.ts`
+- Runtime hardening: `provider-runtime.ts`, `bootstrap.ts` (optional-chain fixes for CLI providers without HTTP endpoints)
 
 ---
 
@@ -47,7 +51,7 @@ First time trying to open with dev containers had errors. Node.js and pnpm wasn'
 
 ### Reproduction Evidence
 
-- **Commit showing reproduction:** [https://github.com/manvocao0271/nous-core/tree/fix-issue-agentadapter-amp]
+- **Commit showing reproduction:** [https://github.com/manvocao0271/nous-core/tree/feat/adapter-amp](https://github.com/manvocao0271/nous-core/tree/feat/adapter-amp)
 - **Screenshots/logs:** [If applicable]
 - **My findings:** [Still have trouble with the CLI and the desktop app interface. Many of the features for the agent are still in production. Will talk with maintainer to get the latest production-ready code for further testing.]
 
@@ -57,30 +61,34 @@ First time trying to open with dev containers had errors. Node.js and pnpm wasn'
 
 ### Analysis
 
-[Project list of coding agents is missing a specific implemention from Amp Code. Needs an adapter file to wire SDK hook.]
+The issue required understanding two things before writing a line of code: (1) the provider leaf contract has changed since the issue was filed — the old `AgentAdapter` path is superseded, and (2) the new CLI provider contract (`ProviderDefinitionLeaf`, `executionCapabilityProfile`, no hand-authored `wellKnownProviderId`) didn't yet exist in the schema and needed to be added as part of this contribution.
 
 ### Proposed Solution
 
-[Refer to already implemented adapters for other coding agents. Refer to Amp's own website for instructions how to set up implementation for local client. Use the current file structure for claude or codex when implementing the adapter for Amp.]
+Add the Amp CLI provider as a certified provider leaf under `self/subcortex/providers/src/providers/amp/`. Extend the schema to support CLI-style providers properly. Create `provider-identity.ts` to centralize ID derivation so no leaf hand-authors a `wellKnownProviderId` UUID.
 
 ### Implementation Plan
 
 Using UMPIRE framework (adapted):
 
-**Understand:** [The project is missing an AgentAdapter for Amp (a coding agent).]
+**Understand:** The provider catalog is missing an Amp leaf. The CLI provider contract (`ProviderDefinitionLeaf`, `executionCapabilityProfile`) is described in the docs but not yet implemented in the schema. The issue's original path (`self/subcortex/coding-agents`) is superseded by the CLI provider leaf system.
 
-**Match:** [This is similar to the other AgentAdapers like Jetbrains, Gemini CLI, OpenClaw, Alibaba Qwen, etc.]
+**Match:** The existing `anthropic`, `openai`, and `ollama` leaves are the reference. For a CLI provider, Ollama (local, no required auth) is the closest structural analog, though Amp has no HTTP endpoint and uses `session_bound_command` instead.
 
-**Plan:** [Step-by-step implementation plan]
-1. [Create file self/subcortex/coding-agents/src/amp-adapter.ts for Amp. Refer to similar files like claude-adapter.ts and codex-adapter.ts]
-2. [File should contain a Amp Agent SDK adapter that wraps Amp Agent SDK. Should run the coding agent task with functions like runAmpAgent, importAmpSdk, buildSdkHooks, extractFinalResponse]
-3. [Use pnpm test to validate input/output against Zod schemas. Write to self/subcortex/coding-agents/src/__tests__/]
+**Plan:**
+1. Extend `self/subcortex/providers/src/schemas/provider-definition.ts`: add `ExecutionCapabilityProfileSchema`, optional `defaultEndpoint`/`defaultModelId`, `ProviderDefinitionLeaf` type
+2. Create `self/subcortex/providers/src/provider-identity.ts`: central `deriveBuiltInProviderId` function so leaves don't hand-author UUIDs
+3. Create `self/subcortex/providers/src/providers/amp/definition.ts`: leaf definition using `ProviderDefinitionLeaf` + derived ID
+4. Create `adapter.ts`: stateless text formatter and `parseResponse` with mandatory fallback
+5. Create `implementation.ts`: `AmpProvider` class spawning the `amp` CLI binary via `node:child_process`
+6. Create `provider.ts`, `index.ts`: factory and public exports
+7. Regenerate catalogs and harden runtime call sites for optional `defaultEndpoint`
 
-**Implement:** [Link to your branch/commits as you work]
+**Implement:** [feat/adapter-amp](https://github.com/manvocao0271/nous-core/tree/feat/adapter-amp)
 
-**Review:** [Self-review checklist - does it follow the project's contribution guidelines?]
+**Review:** Checked against the four doc pages linked in the issue and the `anthropic` reference leaf. Confirmed `wellKnownProviderId` is not hand-authored. Confirmed `executionCapabilityProfile` is declared.
 
-**Evaluate:** [How will you verify it works?]
+**Evaluate:** Run `pnpm --filter @nous/subcortex-providers run check:generated && typecheck && vitest run` against the provider test suite.
 
 ---
 
@@ -88,36 +96,93 @@ Using UMPIRE framework (adapted):
 
 ### Unit Tests
 
-- [ ] Test case 1: [Description]
-- [ ] Test case 2: [Description]
-- [ ] Test case 3: [Description]
+- [x] `ProviderDefinitionSchema` validates the Amp definition (no `wellKnownProviderId` hand-authored, `executionCapabilityProfile` present)
+- [x] `PROVIDER_DEFINITIONS` contains `'amp'` — asserted in `provider-definitions.test.ts`
+- [x] `ProviderVendorKey` and `BootstrapProviderKey` derived types include `'amp'` — asserted in `provider-definition-types.test.ts`
+- [x] Pipeline integration: registry resolves `'amp'` vendorKey to `AmpProvider` class — asserted in `provider-pipeline-integration.test.ts`
+- [ ] Amp adapter `formatRequest` maps system prompt + context frames correctly
+- [ ] Amp adapter `parseResponse` handles string output, object output, and malformed/null input without throwing
+- [ ] `AmpProvider.invoke` writes prompt to stdin and returns stdout (mocked `child_process`)
+- [ ] `AmpProvider.invoke` rejects on non-zero exit code with `PROVIDER_UNAVAILABLE`
+- [ ] `AmpProvider.invoke` rejects on timeout with `PROVIDER_UNAVAILABLE`
+- [ ] `AmpProvider.stream` throws `PROVIDER_UNAVAILABLE` (streaming not supported)
 
 ### Integration Tests
 
-- [ ] Integration scenario 1
-- [ ] Integration scenario 2
+- [x] Generated catalogs are fresh (`check:generated` passes)
+- [ ] Provider pipeline end-to-end with mocked Amp CLI process
 
 ### Manual Testing
 
-[What you tested manually and results]
+Verified devcontainer builds and `pnpm install` + `pnpm build` succeed. Full `vitest run` pending typecheck pass.
 
 ---
 
 ## Implementation Notes
 
-### Week [X] Progress
+### Week 1 Progress
 
-[What you built this week, challenges faced, decisions made]
+Focused entirely on environment setup and understanding the codebase before writing any implementation code.
 
-### Week [Y] Progress
+- Cloned the repo, attempted to open with Dev Containers — failed because Node.js and pnpm were not installed in the container and the devcontainer config was missing a `postCreateCommand`. Fixed `devcontainer.json` to run `corepack enable && corepack prepare pnpm@latest --activate` on creation and committed the devcontainer alongside a `dependabot.yml` for automated feature updates.
+- Ran `pnpm install && pnpm build` successfully. Noted that most UI surfaces (Dashboard, Org Chart, Inbox) are still in development — the relevant surface for this issue is the provider pipeline, not the UI.
+- Discovered that the integration branch (`feat/contributor-friendly-inference-provider-surface`) referenced in the issue had already been merged into `main`. Rebased off `main` instead. Renamed branch from `fix-issue-agentadapter-amp` to `feat/adapter-amp`.
+- Read all four docs pages linked in the issue (cli-provider-guide, provider-leaf-anatomy, schemas-abi-reference, testing-checklist) and studied the `anthropic` reference leaf thoroughly.
 
-[Continue documenting as you work]
+**Key discovery this week:** `ProviderDefinitionLeaf`, `executionCapabilityProfile`, and `provider-identity.ts` are described in the docs as the current CLI provider contract but do not yet exist anywhere in the codebase. Adding them is part of this contribution's scope, not just creating the Amp files.
+
+### Week 2 Progress
+
+Implemented the schema extensions and the core Amp provider leaf files.
+
+- Extended `self/subcortex/providers/src/schemas/provider-definition.ts`: added `ExecutionCapabilityProfileSchema` (Zod enum for `one_shot_command`, `session_bound_command`, `persistent_process`), made `defaultEndpoint` and `defaultModelId` optional (CLI providers have no HTTP endpoint), added `executionCapabilityProfile` as an optional field on `ProviderDefinitionSchema` and `ProviderDefinition`, and exported `ProviderDefinitionLeaf = Omit<ProviderDefinition, 'wellKnownProviderId'>`.
+- Created `self/subcortex/providers/src/provider-identity.ts`: a central registry (`BUILT_IN_PROVIDER_IDS`) that maps vendor keys to stable built-in UUIDs. `deriveBuiltInProviderId(vendorKey)` is the single source of truth — leaves call this instead of hand-authoring a UUID string.
+- Created `amp/definition.ts` using `ProviderDefinitionLeaf` for the authored portion and assembling the full `ProviderDefinition` export via `deriveBuiltInProviderId`. Added inline documentation explaining the leaf contract and why `session_bound_command` was chosen.
+- Created `amp/adapter.ts`: stateless `ProviderAdapter` that formats prompt + context frames as plain text for Amp's stdin, and implements `parseResponse` with a mandatory non-throwing fallback.
+- Hardened two runtime call sites that assumed `defaultEndpoint` was always present: added optional chaining in `provider-runtime.ts` and nullish coalescing in `bootstrap.ts`.
+
+### Week 3 Progress
+
+Completed the provider implementation, factory, public exports, generated catalog updates, and test coverage.
+
+- Created `amp/implementation.ts`: `AmpProvider` class that implements `IModelProvider`. Spawns the `amp` binary via `node:child_process`, writes the formatted prompt to stdin, and collects stdout as the response. Handles timeout (120 s default), abort signal, non-zero exit codes, and spawn errors — all mapped to `NousError` with the appropriate error codes (`PROVIDER_UNAVAILABLE`, `ABORTED`). Streaming intentionally throws `PROVIDER_UNAVAILABLE` since Amp declares `streaming: false`.
+- Created `amp/provider.ts` (factory) and `amp/index.ts` (public leaf exports required by the generator).
+- Updated generated catalogs (`provider-adapters.ts`, `provider-definitions.ts`, `provider-factories.ts`) and `src/index.ts` to include the Amp leaf.
+- Updated existing test files to include Amp assertions: `provider-definitions.test.ts` (catalog roster, metadata validation), `provider-definition-types.test.ts` (derived `ProviderVendorKey` type), `provider-pipeline-integration.test.ts` (registry resolves `'amp'` to `AmpProvider`).
+- Added inline documentation to `definition.ts` and `index.ts`.
+
+**Remaining:** run `pnpm typecheck` and the provider vitest suite to catch any type mismatches before opening the PR.
 
 ### Code Changes
 
-- **Files modified:** [List]
-- **Key commits:** [Links to important commits]
-- **Approach decisions:** [Why you chose certain approaches]
+**Files created:**
+- `self/subcortex/providers/src/provider-identity.ts`
+- `self/subcortex/providers/src/providers/amp/definition.ts`
+- `self/subcortex/providers/src/providers/amp/adapter.ts`
+- `self/subcortex/providers/src/providers/amp/implementation.ts`
+- `self/subcortex/providers/src/providers/amp/provider.ts`
+- `self/subcortex/providers/src/providers/amp/index.ts`
+- `.devcontainer/devcontainer.json`
+- `.devcontainer/devcontainer-lock.json`
+- `.github/dependabot.yml`
+
+**Files modified:**
+- `self/subcortex/providers/src/schemas/provider-definition.ts` — `ExecutionCapabilityProfileSchema`, `ProviderDefinitionLeaf`, optional endpoint/model fields
+- `self/subcortex/providers/src/runtime/provider-runtime.ts` — optional-chain fix
+- `self/apps/shared-server/src/bootstrap.ts` — nullish-coalescing fix
+- `self/subcortex/providers/src/provider-adapters.ts` / `provider-definitions.ts` / `provider-factories.ts` — generated catalog updates
+- `self/subcortex/providers/src/index.ts` — `AmpProvider` public export
+- `self/subcortex/providers/src/__tests__/provider-definitions/provider-definitions.test.ts`
+- `self/subcortex/providers/src/__tests__/provider-definitions/provider-definition-types.test.ts`
+- `self/subcortex/providers/src/__tests__/provider-pipeline-integration.test.ts`
+- `.gitignore` — added `.pnpm-store/`
+
+**Key commits:** [feat/adapter-amp](https://github.com/manvocao0271/nous-core/tree/feat/adapter-amp)
+
+**Approach decisions:**
+- `session_bound_command` over `persistent_process`: Amp can maintain session context but does not expose a strict long-lived process protocol, matching the Codex CLI precedent in the docs.
+- No `defaultEndpoint`: CLI providers don't communicate over HTTP. Rather than invent a fake URL, the schema was extended to make the field optional for CLI leaves.
+- `ProviderDefinitionLeaf` as `Omit<ProviderDefinition, 'wellKnownProviderId'>`: minimal change that satisfies the contract without requiring the generator to change its catalog type.
 
 ---
 
@@ -131,7 +196,7 @@ Using UMPIRE framework (adapted):
 - [Date]: [Summary of feedback received]
 - [Date]: [How you addressed it]
 
-**Status:** [Awaiting review / Iterating / Approved / Merged]
+**Status:** [In progress — typecheck + test suite pending]
 
 ---
 
