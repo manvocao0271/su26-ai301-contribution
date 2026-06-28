@@ -3,7 +3,7 @@
 **Contribution Number:** [287]  
 **Student:** [Man Cao]  
 **Issue:** [https://github.com/orthogonalhq/nous-core/issues/287]  
-**Status:** [Phase III] [Complete]
+**Status:** [Phase IV] [Complete]
 
 ---
 
@@ -188,15 +188,14 @@ Completed the provider implementation, factory, public exports, generated catalo
 
 ## Pull Request
 
-**PR Link:** [GitHub PR URL when submitted]
+**PR Link:** [https://github.com/orthogonalhq/nous-core/pull/415](https://github.com/orthogonalhq/nous-core/pull/415)
 
-**PR Description:** [Draft or final PR description - much of the content above can be adapted]
+**PR Description:** Adds Amp as a certified CLI provider leaf under `self/subcortex/providers/src/providers/amp/`, wiring the full definition, adapter, implementation, and factory into the `@nous/subcortex-providers` catalog. Extends the provider schema to support local CLI providers with no HTTP endpoint by making `defaultEndpoint` optional, adding `executionCapabilityProfile`, and introducing `ProviderDefinitionLeaf` and `provider-identity.ts` so leaves derive their built-in ID centrally rather than hand-authoring a UUID.
 
 **Maintainer Feedback:**
-- [Date]: [Summary of feedback received]
-- [Date]: [How you addressed it]
+- Awaiting initial review
 
-**Status:** [In progress — typecheck + test suite pending]
+**Status:** Awaiting review
 
 ---
 
@@ -204,20 +203,23 @@ Completed the provider implementation, factory, public exports, generated catalo
 
 ### Technical Skills Gained
 
-[What you learned technically]
+I learned how a monorepo provider pipeline is structured end-to-end, from schema definition through Zod validation to factory registration and runtime resolution. Working through the TypeScript `const satisfies` pattern and union type narrowing gave me a much stronger intuition for how strict typing shapes architecture decisions. I also got hands-on experience with `node:child_process` for spawning CLI subprocesses, handling stdin/stdout streams, abort signals, and timeout management in an async context. On the tooling side, I learned how pnpm workspaces, `tsc --build` with project references, and a code generator script all fit together to keep a large codebase consistent.
 
 ### Challenges Overcome
 
-[What was hard and how you solved it]
+The biggest challenge was that the issue referenced a code path (`self/subcortex/coding-agents`) that had already been superseded. I had to read the docs carefully to discover the correct contract (`ProviderDefinitionLeaf`, `executionCapabilityProfile`, `provider-identity.ts`) and then realize none of those things existed in the codebase yet. They were described in the docs but not implemented. That reframing shifted the scope of the work significantly. A second challenge was the Windows build environment: `better-sqlite3` requires native compilation and the VS Build Tools C++ workload and Windows SDK had to be installed in stages before `pnpm install` would succeed. Debugging the TypeScript union type errors that came from adding a CLI provider (with no `defaultEndpoint`) to a catalog that existing code assumed always had an endpoint was also non-trivial and required tracing the type through several layers.
 
 ### What I'd Do Differently Next Time
 
-[Reflection on your process]
+I would verify the referenced code paths in the issue against the actual codebase before starting implementation, rather than discovering mid-way that the target had moved. I would also set up the build environment on a known-good platform first to avoid spending time on native dependency issues unrelated to the contribution itself. Finally, I would write the unit tests for the adapter and implementation in parallel with the code rather than leaving them as a follow-up, since the test gaps became apparent only after the PR was already open.
 
 ---
 
 ## Resources Used
 
-- [Link to helpful documentation]
+- [https://docs.nue.orthg.nl/docs/development/provider-adapters/cli-provider-guide
+https://docs.nue.orthg.nl/docs/development/provider-adapters/provider-leaf-anatomy
+https://docs.nue.orthg.nl/docs/development/provider-adapters/schemas-abi-reference
+https://docs.nue.orthg.nl/docs/development/provider-adapters/testing-checklist]
 - [Tutorial or Stack Overflow post that helped]
-- [GitHub issues or discussions that helped]
+- [[GitHub issues or discussions that helped](https://github.com/orthogonalhq/nous-core/issues/296)]
