@@ -193,9 +193,10 @@ Completed the provider implementation, factory, public exports, generated catalo
 **PR Description:** Adds Amp as a certified CLI provider leaf under `self/subcortex/providers/src/providers/amp/`, wiring the full definition, adapter, implementation, and factory into the `@nous/subcortex-providers` catalog. Extends the provider schema to support local CLI providers with no HTTP endpoint by making `defaultEndpoint` optional, adding `executionCapabilityProfile`, and introducing `ProviderDefinitionLeaf` and `provider-identity.ts` so leaves derive their built-in ID centrally rather than hand-authoring a UUID.
 
 **Maintainer Feedback:**
-- Awaiting initial review
+- `@atlamors` (reviewer) requested changes — branch hygiene block: PR was originally targeting `main` instead of the active integration branch `feat/contributor-friendly-inference-provider-surface`. Reviewer noted this was a process issue, not a judgment on the Amp implementation itself. Requested that the PR be retargeted to the correct branch and the `feat/adapter-amp` branch be rebased against it. Once retargeted, reviewer committed to reviewing the provider leaf, CLI runner behavior, generated catalog wiring, and tests.
+- PR has been retargeted to `feat/contributor-friendly-inference-provider-surface` and force-pushed with a rebased branch. Awaiting substantive re-review from `@atlamors`.
 
-**Status:** Awaiting review
+**Status:** Changes requested (branch retargeted — awaiting re-review)
 
 ---
 
