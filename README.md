@@ -3,7 +3,7 @@
 **Contribution Number:** [287]  
 **Student:** [Man Cao]  
 **Issue:** [https://github.com/orthogonalhq/nous-core/issues/287]  
-**Status:** [Phase IV] [Complete]
+**Status:** [Phase VI] [Review Feedback Addressed, Pending Re-Review]
 
 ---
 
@@ -100,21 +100,24 @@ Using UMPIRE framework (adapted):
 - [x] `PROVIDER_DEFINITIONS` contains `'amp'` — asserted in `provider-definitions.test.ts`
 - [x] `ProviderVendorKey` and `BootstrapProviderKey` derived types include `'amp'` — asserted in `provider-definition-types.test.ts`
 - [x] Pipeline integration: registry resolves `'amp'` vendorKey to `AmpProvider` class — asserted in `provider-pipeline-integration.test.ts`
-- [ ] Amp adapter `formatRequest` maps system prompt + context frames correctly
-- [ ] Amp adapter `parseResponse` handles string output, object output, and malformed/null input without throwing
-- [ ] `AmpProvider.invoke` writes prompt to stdin and returns stdout (mocked `child_process`)
-- [ ] `AmpProvider.invoke` rejects on non-zero exit code with `PROVIDER_UNAVAILABLE`
-- [ ] `AmpProvider.invoke` rejects on timeout with `PROVIDER_UNAVAILABLE`
-- [ ] `AmpProvider.stream` throws `PROVIDER_UNAVAILABLE` (streaming not supported)
+- [x] Amp adapter `formatRequest` maps system prompt + context frames correctly
+- [x] Amp adapter `parseResponse` handles string output, object output, and malformed/null input without throwing
+- [x] `AmpProvider.invoke` writes prompt to stdin and returns stdout
+- [x] `AmpProvider.invoke` rejects on non-zero exit code with `PROVIDER_UNAVAILABLE`
+- [x] `AmpProvider.invoke` rejects on timeout with `PROVIDER_UNAVAILABLE`
+- [x] `AmpProvider.stream` throws `PROVIDER_UNAVAILABLE` (streaming not supported)
+- [x] `AmpProvider.invoke` rejects invalid input before invoking the runner
+- [x] `AmpProvider.invoke` propagates an already aborted `AbortSignal` to the runner
+- [x] `createAmpProcessRunner` reports `spawn_error` for a nonexistent executable and honors abort before start
 
 ### Integration Tests
 
 - [x] Generated catalogs are fresh (`check:generated` passes)
-- [ ] Provider pipeline end-to-end with mocked Amp CLI process
+- [x] Provider pipeline end to end with a real spawned process standing in for the Amp CLI, via `createAmpProcessRunner` tested against `process.execPath`
 
 ### Manual Testing
 
-Verified devcontainer builds and `pnpm install` + `pnpm build` succeed. Full `vitest run` pending typecheck pass.
+Verified devcontainer builds and `pnpm install` + `pnpm build` succeed. Full `pnpm --filter @nous/subcortex-providers typecheck` and `vitest run` both pass clean (454 tests passed, 4 skipped, 0 failed) as of Week 6. Full monorepo `pnpm typecheck` surfaces two pre-existing failures in `self/apps/shared-server`, caused by `defaultEndpoint` becoming optional. Confirmed out of scope for this PR and flagged separately.
 
 ---
 
@@ -153,6 +156,38 @@ Completed the provider implementation, factory, public exports, generated catalo
 
 **Remaining:** run `pnpm typecheck` and the provider vitest suite to catch any type mismatches before opening the PR.
 
+### Week 4 Progress
+
+Focused on responding to review feedback and cleaning up branch scope.
+
+- Received review feedback on PR #415 requesting changes to the schema, the CLI invocation, the process spawning approach, test coverage, whitespace, and unrelated files in the diff.
+- Found two commits in the branch (docs branding, devcontainer setup) that weren't part of the Amp work and had been pulled in during an earlier rebase.
+- Rebased the branch to drop those two commits, keeping only the Amp related work.
+- Pushed the cleaned branch so the PR updated in place, now scoped to 17 files.
+
+### Week 5 Progress
+
+Focused on the two most self contained review comments: the schema fix and the CLI flag.
+
+- Tracked down the duplicate `executionCapabilityProfile` field to a name collision between an import and a local redeclaration, and removed the redundant one.
+- Confirmed Amp's documented non interactive flag is `-x`, not `--output text`, and updated the invocation.
+- Ran a scoped typecheck to confirm both fixes were clean.
+- Ran a full monorepo typecheck and found two unrelated pre existing failures in `shared-server`, caused by `defaultEndpoint` becoming optional. Decided this was out of scope for the PR and flagged it separately.
+- Confirmed lint was clean for all files touched by this PR.
+- Committed both fixes together.
+
+### Week 6 Progress
+
+Focused on the runner refactor and the missing behavior tests, the last two review comments.
+
+- Reviewed the existing `github-copilot-cli` provider to understand the shared agent-cli runner pattern used elsewhere in the codebase.
+- Added an `agentCli` metadata block to Amp's definition and rewrote `implementation.ts` so `AmpProvider` spawns through an injectable runner instead of a hardcoded process call.
+- Updated the provider factory to support runner injection, matching the existing pattern.
+- Added two new test files covering the provider's behavior and the runner's process handling, 14 tests total.
+- Ran the full test suite: 454 passed, 4 skipped, 0 failed.
+- Committed the refactor and the tests as two separate commits.
+- **Remaining:** re-request review and summarize what changed since the last review pass.
+
 ### Code Changes
 
 **Files created:**
@@ -162,9 +197,11 @@ Completed the provider implementation, factory, public exports, generated catalo
 - `self/subcortex/providers/src/providers/amp/implementation.ts`
 - `self/subcortex/providers/src/providers/amp/provider.ts`
 - `self/subcortex/providers/src/providers/amp/index.ts`
-- `.devcontainer/devcontainer.json`
-- `.devcontainer/devcontainer-lock.json`
-- `.github/dependabot.yml`
+- `self/subcortex/providers/src/__tests__/amp-provider.test.ts`
+- `self/subcortex/providers/src/__tests__/amp-process-runner.test.ts`
+- `.devcontainer/devcontainer.json` (dropped from the PR in Week 4, kept here as a record of Week 1 environment work)
+- `.devcontainer/devcontainer-lock.json` (dropped from the PR in Week 4)
+- `.github/dependabot.yml` (dropped from the PR in Week 4)
 
 **Files modified:**
 - `self/subcortex/providers/src/schemas/provider-definition.ts` — `ExecutionCapabilityProfileSchema`, `ProviderDefinitionLeaf`, optional endpoint/model fields
@@ -193,10 +230,19 @@ Completed the provider implementation, factory, public exports, generated catalo
 **PR Description:** Adds Amp as a certified CLI provider leaf under `self/subcortex/providers/src/providers/amp/`, wiring the full definition, adapter, implementation, and factory into the `@nous/subcortex-providers` catalog. Extends the provider schema to support local CLI providers with no HTTP endpoint by making `defaultEndpoint` optional, adding `executionCapabilityProfile`, and introducing `ProviderDefinitionLeaf` and `provider-identity.ts` so leaves derive their built-in ID centrally rather than hand-authoring a UUID.
 
 **Maintainer Feedback:**
-- `@atlamors` (reviewer) requested changes — branch hygiene block: PR was originally targeting `main` instead of the active integration branch `feat/contributor-friendly-inference-provider-surface`. Reviewer noted this was a process issue, not a judgment on the Amp implementation itself. Requested that the PR be retargeted to the correct branch and the `feat/adapter-amp` branch be rebased against it. Once retargeted, reviewer committed to reviewing the provider leaf, CLI runner behavior, generated catalog wiring, and tests.
-- PR has been retargeted to `feat/contributor-friendly-inference-provider-surface` and force-pushed with a rebased branch. Awaiting substantive re-review from `@atlamors`.
+- `@atlamors` re-reviewed the PR after the branch hygiene fix and still requested changes before merge.
+- Blocking issue: duplicate `executionCapabilityProfile` declarations were introduced in `self/subcortex/providers/src/schemas/provider-definition.ts`; the base branch already exposes a typed `CliExecutionCapabilityProfileSchema.optional()` field and corresponding `CliExecutionCapabilityProfile` property.
+- Requested revision: remove the duplicate loose `executionCapabilityProfile?: string` schema/interface shape and use the existing shared CLI capability-profile enum/type; if Amp needs a new value, extend the canonical shared enum.
+- Requested Amp provider behavior changes and tests for CLI invocation, runner injection or equivalent hardening, timeout/abort handling, stdin write/end failures, non-zero exits, prompt formatting, stdout parsing, malformed output handling, and factory/runner injection coverage.
+- Cleanup requested: normalize trailing whitespace in new Amp files and remove unrelated devcontainer/dependabot changes unless they are intentionally part of this provider-focused PR.
 
-**Status:** Changes requested (branch retargeted — awaiting re-review)
+**Response to feedback (Weeks 4 to 6):**
+- Week 4: rebased the branch to drop unrelated devcontainer/docs commits, restoring the PR to a provider only scope.
+- Week 5: removed the duplicate `executionCapabilityProfile` declaration and switched the CLI invocation to the documented `-x` flag.
+- Week 6: rewrote `AmpProvider` to route through an injectable runner, matching the existing `github-copilot-cli` pattern, and added dedicated behavior test coverage for both the provider and the runner.
+- Not addressed in this PR: two pre-existing `shared-server` typecheck failures surfaced by `defaultEndpoint` becoming optional. Judged out of scope for issue #287 and flagged separately.
+
+**Status:** All six original review comments addressed. Re-requesting review.
 
 ---
 
