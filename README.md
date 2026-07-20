@@ -3,7 +3,7 @@
 **Contribution Number:** [287]  
 **Student:** [Man Cao]  
 **Issue:** [https://github.com/orthogonalhq/nous-core/issues/287]  
-**Status:** [Phase VI] [Review Feedback Addressed, Pending Re-Review]
+**Status:** [Phase VII] [Clarifying Stale Re-Review, Pending Reviewer Confirmation]
 
 ---
 
@@ -17,7 +17,7 @@ I chose this issue because I found Nous to be quite interesting to learn from as
 
 ### Problem Description
 
-Nous is missing a provider adapter for Amp, a session-bound CLI coding agent. Without it, Nous cannot dispatch tasks to Amp or route it through the model provider pipeline. The issue originally referenced the old `AgentAdapter` / `self/subcortex/coding-agents` path, but that path has been superseded — the current contract is the CLI provider leaf system under `self/subcortex/providers/src/providers/<vendor>/`.
+Nous is missing a provider adapter for Amp, a session-bound CLI coding agent. Without it, Nous cannot dispatch tasks to Amp or route it through the model provider pipeline. The issue originally referenced the old `AgentAdapter` / `self/subcortex/coding-agents` path, but that path has been superseded, the current contract is the CLI provider leaf system under `self/subcortex/providers/src/providers/<vendor>/`.
 
 ### Expected Behavior
 
@@ -61,7 +61,7 @@ First time trying to open with dev containers had errors. Node.js and pnpm wasn'
 
 ### Analysis
 
-The issue required understanding two things before writing a line of code: (1) the provider leaf contract has changed since the issue was filed — the old `AgentAdapter` path is superseded, and (2) the new CLI provider contract (`ProviderDefinitionLeaf`, `executionCapabilityProfile`, no hand-authored `wellKnownProviderId`) didn't yet exist in the schema and needed to be added as part of this contribution.
+The issue required understanding two things before writing a line of code: (1) the provider leaf contract has changed since the issue was filed, the old `AgentAdapter` path is superseded, and (2) the new CLI provider contract (`ProviderDefinitionLeaf`, `executionCapabilityProfile`, no hand-authored `wellKnownProviderId`) didn't yet exist in the schema and needed to be added as part of this contribution.
 
 ### Proposed Solution
 
@@ -188,6 +188,18 @@ Focused on the runner refactor and the missing behavior tests, the last two revi
 - Committed the refactor and the tests as two separate commits.
 - **Remaining:** re-request review and summarize what changed since the last review pass.
 
+### Week 7 Progress
+
+Focused on a second round of review feedback that repeated the original five comments almost verbatim.
+
+- Received a follow-up re-review listing the same duplicate schema field, CLI flag, runner seam, and missing test issues as the first review, plus a note about unrelated merge conflicts from newly merged providers.
+- Compared the review against the actual code on the branch and found it quoted the old `--output text` invocation, which had already been replaced with `-x` back in Week 5.
+- Confirmed locally that the branch and its remote were identical, six commits including the Week 5 and Week 6 fixes, ruling out a push gap.
+- Checked the PR's file listing on GitHub directly and confirmed all expected commits and both new test files were present, narrowing the mismatch down to a stale diff or cached review rather than a regression.
+- Ran targeted checks against the current commit's schema, definition, implementation, and factory files to confirm each fix was genuinely in place: a single `executionCapabilityProfile` field, the `-x` flag, the injectable runner, and runner injection wired through the factory.
+- Replied on the PR with specific line numbers and commit references confirming each fix, and asked the reviewer to confirm they were viewing the current head rather than a cached diff.
+- **Remaining:** waiting on reviewer confirmation or a fresh pass against the current commit.
+
 ### Code Changes
 
 **Files created:**
@@ -235,14 +247,16 @@ Focused on the runner refactor and the missing behavior tests, the last two revi
 - Requested revision: remove the duplicate loose `executionCapabilityProfile?: string` schema/interface shape and use the existing shared CLI capability-profile enum/type; if Amp needs a new value, extend the canonical shared enum.
 - Requested Amp provider behavior changes and tests for CLI invocation, runner injection or equivalent hardening, timeout/abort handling, stdin write/end failures, non-zero exits, prompt formatting, stdout parsing, malformed output handling, and factory/runner injection coverage.
 - Cleanup requested: normalize trailing whitespace in new Amp files and remove unrelated devcontainer/dependabot changes unless they are intentionally part of this provider-focused PR.
+- Second re-review (Week 7): the same five points were raised again almost word for word, including a quote of the pre-Week-5 `--output text` invocation. Verified against the current commit that all five had already been resolved, and replied on the PR with exact line numbers and commit SHAs asking the reviewer to confirm they were viewing the current head.
 
-**Response to feedback (Weeks 4 to 6):**
+**Response to feedback (Weeks 4 to 7):**
 - Week 4: rebased the branch to drop unrelated devcontainer/docs commits, restoring the PR to a provider only scope.
 - Week 5: removed the duplicate `executionCapabilityProfile` declaration and switched the CLI invocation to the documented `-x` flag.
 - Week 6: rewrote `AmpProvider` to route through an injectable runner, matching the existing `github-copilot-cli` pattern, and added dedicated behavior test coverage for both the provider and the runner.
+- Week 7: verified all Week 5 and Week 6 fixes were genuinely present on the current commit after a second review repeated the original comments, and replied with specific evidence rather than redoing any work.
 - Not addressed in this PR: two pre-existing `shared-server` typecheck failures surfaced by `defaultEndpoint` becoming optional. Judged out of scope for issue #287 and flagged separately.
 
-**Status:** All six original review comments addressed. Re-requesting review.
+**Status:** All six original review comments addressed and verified present on the current commit. Awaiting reviewer confirmation on the second re-review.
 
 ---
 
