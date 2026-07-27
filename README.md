@@ -3,7 +3,7 @@
 **Contribution Number:** [287]  
 **Student:** [Man Cao]  
 **Issue:** [https://github.com/orthogonalhq/nous-core/issues/287]  
-**Status:** [Phase VII] [Clarifying Stale Re-Review, Pending Reviewer Confirmation]
+**Status:** [Phase VIII] [Line Endings Fixed, All Points Addressed, Pending Re-Review]
 
 ---
 
@@ -117,7 +117,7 @@ Using UMPIRE framework (adapted):
 
 ### Manual Testing
 
-Verified devcontainer builds and `pnpm install` + `pnpm build` succeed. Full `pnpm --filter @nous/subcortex-providers typecheck` and `vitest run` both pass clean (454 tests passed, 4 skipped, 0 failed) as of Week 6. Full monorepo `pnpm typecheck` surfaces two pre-existing failures in `self/apps/shared-server`, caused by `defaultEndpoint` becoming optional. Confirmed out of scope for this PR and flagged separately.
+Verified devcontainer builds and `pnpm install` + `pnpm build` succeed. Full `pnpm --filter @nous/subcortex-providers typecheck` and `vitest run` both pass clean (454 tests passed, 4 skipped, 0 failed) as of Week 8, re-confirmed after the line-ending fix with no regressions. Full monorepo `pnpm typecheck` surfaces two pre-existing failures in `self/apps/shared-server`, caused by `defaultEndpoint` becoming optional. Confirmed out of scope for this PR and flagged separately.
 
 ---
 
@@ -200,6 +200,18 @@ Focused on a second round of review feedback that repeated the original five com
 - Replied on the PR with specific line numbers and commit references confirming each fix, and asked the reviewer to confirm they were viewing the current head rather than a cached diff.
 - **Remaining:** waiting on reviewer confirmation or a fresh pass against the current commit.
 
+### Week 8 Progress
+
+Focused on a third round of review feedback repeating the same five points, and finally isolating a real issue underneath it.
+
+- Received a third re-review with nearly identical wording to the previous two passes, again citing the old CLI flag and the duplicate schema field.
+- Ran a full mechanical verification against the committed tree rather than the working copy, exact occurrence counts, literal string searches, and a real test run, to rule out any remaining ambiguity on points 1 through 4. All four continued to check out as resolved.
+- The whitespace point turned out to be the one exception. `git diff --check` was not flagging trailing spaces as originally assumed, it was flagging CRLF line endings across all 8 Amp files, left over from the Windows development environment.
+- Normalized every affected file to LF line endings, confirmed `git diff --check` came back clean, and re-ran the full typecheck and test suite to confirm nothing else changed, still 454 passed, 0 failed.
+- Committed and pushed the line-ending fix on its own.
+- Replied on the PR crediting the one genuinely new finding, the CRLF issue, while reiterating the specific, verified evidence for the other four points.
+- **Remaining:** waiting on reviewer response to the fourth reply. If the next pass repeats the same unverified claims, plan to ask a second maintainer to take a look.
+
 ### Code Changes
 
 **Files created:**
@@ -216,7 +228,7 @@ Focused on a second round of review feedback that repeated the original five com
 - `.github/dependabot.yml` (dropped from the PR in Week 4)
 
 **Files modified:**
-- `self/subcortex/providers/src/schemas/provider-definition.ts` — `ExecutionCapabilityProfileSchema`, `ProviderDefinitionLeaf`, optional endpoint/model fields
+- `self/subcortex/providers/src/schemas/provider-definition.ts` — `ExecutionCapabilityProfileSchema`, `ProviderDefinitionLeaf`, optional endpoint/model fields, line endings normalized in Week 8
 - `self/subcortex/providers/src/runtime/provider-runtime.ts` — optional-chain fix
 - `self/apps/shared-server/src/bootstrap.ts` — nullish-coalescing fix
 - `self/subcortex/providers/src/provider-adapters.ts` / `provider-definitions.ts` / `provider-factories.ts` — generated catalog updates
@@ -248,15 +260,17 @@ Focused on a second round of review feedback that repeated the original five com
 - Requested Amp provider behavior changes and tests for CLI invocation, runner injection or equivalent hardening, timeout/abort handling, stdin write/end failures, non-zero exits, prompt formatting, stdout parsing, malformed output handling, and factory/runner injection coverage.
 - Cleanup requested: normalize trailing whitespace in new Amp files and remove unrelated devcontainer/dependabot changes unless they are intentionally part of this provider-focused PR.
 - Second re-review (Week 7): the same five points were raised again almost word for word, including a quote of the pre-Week-5 `--output text` invocation. Verified against the current commit that all five had already been resolved, and replied on the PR with exact line numbers and commit SHAs asking the reviewer to confirm they were viewing the current head.
+- Third re-review (Week 8): the same five points were raised a third time with nearly identical wording. A full mechanical re-verification confirmed points 1 through 4 were still resolved, but surfaced a genuine issue behind point 5, CRLF line endings rather than trailing whitespace, which had not been caught by the earlier whitespace check.
 
-**Response to feedback (Weeks 4 to 7):**
+**Response to feedback (Weeks 4 to 8):**
 - Week 4: rebased the branch to drop unrelated devcontainer/docs commits, restoring the PR to a provider only scope.
 - Week 5: removed the duplicate `executionCapabilityProfile` declaration and switched the CLI invocation to the documented `-x` flag.
 - Week 6: rewrote `AmpProvider` to route through an injectable runner, matching the existing `github-copilot-cli` pattern, and added dedicated behavior test coverage for both the provider and the runner.
 - Week 7: verified all Week 5 and Week 6 fixes were genuinely present on the current commit after a second review repeated the original comments, and replied with specific evidence rather than redoing any work.
+- Week 8: after a third repeated review, ran a full mechanical verification of all five points against the committed tree. Found and fixed a genuine CRLF line-ending issue across all 8 Amp files, and replied acknowledging that fix while reiterating verified evidence for the other four points.
 - Not addressed in this PR: two pre-existing `shared-server` typecheck failures surfaced by `defaultEndpoint` becoming optional. Judged out of scope for issue #287 and flagged separately.
 
-**Status:** All six original review comments addressed and verified present on the current commit. Awaiting reviewer confirmation on the second re-review.
+**Status:** All five review points addressed and verified, including a genuine line-ending fix in Week 8. Awaiting reviewer response to the fourth reply.
 
 ---
 
@@ -264,15 +278,15 @@ Focused on a second round of review feedback that repeated the original five com
 
 ### Technical Skills Gained
 
-I learned how a monorepo provider pipeline is structured end-to-end, from schema definition through Zod validation to factory registration and runtime resolution. Working through the TypeScript `const satisfies` pattern and union type narrowing gave me a much stronger intuition for how strict typing shapes architecture decisions. I also got hands-on experience with `node:child_process` for spawning CLI subprocesses, handling stdin/stdout streams, abort signals, and timeout management in an async context. On the tooling side, I learned how pnpm workspaces, `tsc --build` with project references, and a code generator script all fit together to keep a large codebase consistent.
+I learned how a monorepo provider pipeline is structured end-to-end, from schema definition through Zod validation to factory registration and runtime resolution. Working through the TypeScript `const satisfies` pattern and union type narrowing gave me a much stronger intuition for how strict typing shapes architecture decisions. I also got hands-on experience with `node:child_process` for spawning CLI subprocesses, handling stdin/stdout streams, abort signals, and timeout management in an async context. On the tooling side, I learned how pnpm workspaces, `tsc --build` with project references, and a code generator script all fit together to keep a large codebase consistent. This phase in particular taught me how to distinguish a genuine unresolved issue from a stale or repeated review by verifying claims directly against the committed tree rather than assuming either side is automatically right.
 
 ### Challenges Overcome
 
-The biggest challenge was that the issue referenced a code path (`self/subcortex/coding-agents`) that had already been superseded. I had to read the docs carefully to discover the correct contract (`ProviderDefinitionLeaf`, `executionCapabilityProfile`, `provider-identity.ts`) and then realize none of those things existed in the codebase yet. They were described in the docs but not implemented. That reframing shifted the scope of the work significantly. A second challenge was the Windows build environment: `better-sqlite3` requires native compilation and the VS Build Tools C++ workload and Windows SDK had to be installed in stages before `pnpm install` would succeed. Debugging the TypeScript union type errors that came from adding a CLI provider (with no `defaultEndpoint`) to a catalog that existing code assumed always had an endpoint was also non-trivial and required tracing the type through several layers.
+The biggest challenge was that the issue referenced a code path (`self/subcortex/coding-agents`) that had already been superseded. I had to read the docs carefully to discover the correct contract (`ProviderDefinitionLeaf`, `executionCapabilityProfile`, `provider-identity.ts`) and then realize none of those things existed in the codebase yet. They were described in the docs but not implemented. That reframing shifted the scope of the work significantly. A second challenge was the Windows build environment: `better-sqlite3` requires native compilation and the VS Build Tools C++ workload and Windows SDK had to be installed in stages before `pnpm install` would succeed. That same Windows environment resurfaced later as the root cause of the CRLF line-ending issue in Weeks 7 and 8. Debugging the TypeScript union type errors that came from adding a CLI provider (with no `defaultEndpoint`) to a catalog that existing code assumed always had an endpoint was also non-trivial and required tracing the type through several layers.
 
 ### What I'd Do Differently Next Time
 
-I would verify the referenced code paths in the issue against the actual codebase before starting implementation, rather than discovering mid-way that the target had moved. I would also set up the build environment on a known-good platform first to avoid spending time on native dependency issues unrelated to the contribution itself. Finally, I would write the unit tests for the adapter and implementation in parallel with the code rather than leaving them as a follow-up, since the test gaps became apparent only after the PR was already open.
+I would verify the referenced code paths in the issue against the actual codebase before starting implementation, rather than discovering mid-way that the target had moved. I would also set up the build environment on a known-good platform first to avoid spending time on native dependency issues unrelated to the contribution itself, and would configure a repo-appropriate `.editorconfig` or Git line-ending setting from day one to avoid the CRLF issue entirely. Finally, I would write the unit tests for the adapter and implementation in parallel with the code rather than leaving them as a follow-up, since the test gaps became apparent only after the PR was already open.
 
 ---
 
