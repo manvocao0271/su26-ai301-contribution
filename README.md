@@ -3,7 +3,7 @@
 **Contribution Number:** [287]  
 **Student:** [Man Cao]  
 **Issue:** [https://github.com/orthogonalhq/nous-core/issues/287]  
-**Status:** [Phase IV] [Complete: Rebased Onto Latest Integration Branch, Pre-Existing Test Failure Isolated, Pending Re-Review]
+**Status:** [Phase IV] [Merged, PR Closed]
 
 ---
 
@@ -117,7 +117,7 @@ Using UMPIRE framework (adapted):
 
 ### Manual Testing
 
-Verified devcontainer builds and `pnpm install` + `pnpm build` succeed. Full `pnpm --filter @nous/subcortex-providers typecheck` and `vitest run` both passed clean (454 tests passed, 4 skipped, 0 failed) as of Week 8. After the Week 10 rebase, three tests in an unrelated Qwen Code provider file fail locally, confirmed pre-existing against clean upstream code and unrelated to this PR. All Amp-specific tests remain fully passing post-rebase. Full monorepo `pnpm typecheck` surfaces two pre-existing failures in `self/apps/shared-server`, caused by `defaultEndpoint` becoming optional. Confirmed out of scope for this PR and flagged separately.
+Verified devcontainer builds and `pnpm install` + `pnpm build` succeed. Full `pnpm --filter @nous/subcortex-providers typecheck` and `vitest run` both passed clean (454 tests passed, 4 skipped, 0 failed) as of Week 8. After the Week 9 rebase, three tests in an unrelated Qwen Code provider file fail locally, confirmed pre-existing against clean upstream code and unrelated to this PR. All Amp-specific tests remained fully passing through the Week 10 documentation fix and the final merge. Full monorepo `pnpm typecheck` surfaces two pre-existing failures in `self/apps/shared-server`, caused by `defaultEndpoint` becoming optional. Confirmed out of scope for this PR and flagged separately.
 
 ---
 
@@ -225,6 +225,18 @@ Focused on rebasing onto the latest integration branch to clear merge conflicts,
 - Ran the full test suite after the rebase and found three failing tests, all in a Qwen Code provider file that this PR has never touched. Verified the same three tests fail identically against a clean, unmodified copy of the upstream branch, confirming the failures are pre-existing and unrelated to this PR before ruling them out of scope.
 - **Remaining:** push the rebased branch, note the pre-existing Qwen Code test failures in the PR for transparency, and confirm the Amp-specific suite is still fully green post-rebase.
 
+### Week 10 Progress
+
+Focused on the final review pass, one last documentation-accuracy fix, and the PR merging.
+
+- Received a re-review where the maintainer had gone back through the implementation from scratch, identified that their previous three review passes had described outdated code, and corrected the record directly, confirming the duplicate schema field, CLI invocation, shared runner integration, and Amp-specific test coverage were in fact already resolved.
+- One legitimate point remained: the `executionCapabilityProfile` value should describe the integration as implemented (`one_shot_command`, a fresh process per request with no thread retained) rather than `session_bound_command`, since Amp supports thread continuation through other commands that this integration does not use.
+- Researched Amp's own CLI documentation to confirm the reasoning before agreeing, verifying that thread continuation exists via `amp threads continue [threadId] -x` and that this integration never captures or passes a thread identifier.
+- Checked the actual current files rather than assuming from memory and found the `executionCapabilityProfile` value itself was already correct in both `definition.ts` and `adapter.ts`, only the surrounding doc comments were stale and still described the old reasoning.
+- Rewrote both comment blocks to match the current value, added a caveat noting Amp's thread-continuation capability isn't used by this integration, and re-ran the full typecheck and test suite to confirm the change was documentation-only.
+- Replied with the fix, confirmed the same pre-existing Qwen Code test failures as a heads-up before the maintainer's own merged-state checks, and raised two additional points for the maintainer's shared-surface tracking issue: the duplicated process-lifecycle logic between this provider and the existing CLI provider it was modeled on, and an open question about whether Amp supports non-interactive API-key auth in addition to the interactive session flow currently documented.
+- The maintainer merged the PR, closed the original issue, credited the contribution for surfacing several shared provider-surface gaps now tracked separately, and invited continued contribution on CLI provider work.
+
 ### Code Changes
 
 **Files created:**
@@ -274,18 +286,20 @@ Focused on rebasing onto the latest integration branch to clear merge conflicts,
 - Cleanup requested: normalize trailing whitespace in new Amp files and remove unrelated devcontainer/dependabot changes unless they are intentionally part of this provider-focused PR.
 - Second re-review (Week 7): the same five points were raised again almost word for word, including a quote of the pre-Week-5 `--output text` invocation. Verified against the current commit that all five had already been resolved, and replied on the PR with exact line numbers and commit SHAs asking the reviewer to confirm they were viewing the current head.
 - Third re-review (Week 8): the same five points were raised a third time with nearly identical wording. A full mechanical re-verification confirmed points 1 through 4 were still resolved, but surfaced a genuine issue behind point 5, CRLF line endings rather than trailing whitespace, which had not been caught by the earlier whitespace check.
-- Week 10: separate from the review comments, the PR began showing real merge conflicts against the base branch from unrelated providers merged upstream. Rebased to resolve them and discovered three pre-existing, unrelated test failures in the process, confirmed against clean upstream code before ruling them out of scope.
+- Week 9: separate from the review comments, the PR began showing real merge conflicts against the base branch from unrelated providers merged upstream. Rebased to resolve them and discovered three pre-existing, unrelated test failures in the process, confirmed against clean upstream code before ruling them out of scope.
+- Week 10: the maintainer re-reviewed the implementation from scratch, corrected their own three prior review passes as inaccurate, and confirmed the schema, CLI invocation, runner integration, and test coverage were already resolved. One legitimate point remained, the execution profile should read `one_shot_command` rather than `session_bound_command`. Fixed and confirmed. The maintainer then merged the PR and closed the issue.
 
-**Response to feedback (Weeks 4 to 9):**
+**Response to feedback (Weeks 4 to 10):**
 - Week 4: rebased the branch to drop unrelated devcontainer/docs commits, restoring the PR to a provider only scope.
 - Week 5: removed the duplicate `executionCapabilityProfile` declaration and switched the CLI invocation to the documented `-x` flag.
 - Week 6: rewrote `AmpProvider` to route through an injectable runner, matching the existing `github-copilot-cli` pattern, and added dedicated behavior test coverage for both the provider and the runner.
 - Week 7: verified all Week 5 and Week 6 fixes were genuinely present on the current commit after a second review repeated the original comments, and replied with specific evidence rather than redoing any work.
 - Week 8: after a third repeated review, ran a full mechanical verification of all five points against the committed tree. Found and fixed a genuine CRLF line-ending issue across all 8 Amp files, and replied acknowledging that fix while reiterating verified evidence for the other four points.
 - Week 9: rebased onto the latest integration branch to resolve merge conflicts unrelated to the review comments, caused by a wave of new providers merged upstream. Discovered and confirmed three pre-existing test failures in an unrelated provider file during the process.
-- Not addressed in this PR: two pre-existing `shared-server` typecheck failures surfaced by `defaultEndpoint` becoming optional, and three pre-existing Qwen Code live-runner test failures surfaced after the Week 10 rebase. Both confirmed unrelated to this PR and flagged separately.
+- Week 10: after the maintainer's from-scratch re-review confirmed the prior four points were already resolved, fixed the one remaining accuracy issue, stale documentation describing the wrong execution profile, verified the actual value was already correct, and updated only the comments. The PR was merged.
+- Not addressed in this PR: two pre-existing `shared-server` typecheck failures surfaced by `defaultEndpoint` becoming optional, and three pre-existing Qwen Code live-runner test failures surfaced after the Week 9 rebase. Both confirmed unrelated to this PR, flagged to the maintainer, and left for the maintainer-owned tracking issues.
 
-**Status:** All five review points addressed and verified. Branch rebased onto the latest integration branch with conflicts resolved. Two unrelated pre-existing issues identified and flagged, not part of this PR's scope.
+**Status:** Merged. PR #415 closed by the maintainer. Original issue #287 closed. Remaining shared-surface work (agent-cli lifecycle, prompt-delivery representation, endpointless-provider schema design) tracked separately under maintainer-owned issues #413 and #414, not outstanding parts of this contribution.
 
 ---
 
@@ -293,7 +307,7 @@ Focused on rebasing onto the latest integration branch to clear merge conflicts,
 
 ### Technical Skills Gained
 
-I learned how a monorepo provider pipeline is structured end-to-end, from schema definition through Zod validation to factory registration and runtime resolution. Working through the TypeScript `const satisfies` pattern and union type narrowing gave me a much stronger intuition for how strict typing shapes architecture decisions. I also got hands-on experience with `node:child_process` for spawning CLI subprocesses, handling stdin/stdout streams, abort signals, and timeout management in an async context. On the tooling side, I learned how pnpm workspaces, `tsc --build` with project references, and a code generator script all fit together to keep a large codebase consistent. This phase in particular taught me how to distinguish a genuine unresolved issue from a stale or repeated review by verifying claims directly against the committed tree rather than assuming either side is automatically right, and the same discipline applied again when isolating a failing test as pre-existing rather than assuming it was caused by my own changes, checking it against a clean copy of the upstream branch before ruling it out of scope.
+I learned how a monorepo provider pipeline is structured end-to-end, from schema definition through Zod validation to factory registration and runtime resolution. Working through the TypeScript `const satisfies` pattern and union type narrowing gave me a much stronger intuition for how strict typing shapes architecture decisions. I also got hands-on experience with `node:child_process` for spawning CLI subprocesses, handling stdin/stdout streams, abort signals, and timeout management in an async context. On the tooling side, I learned how pnpm workspaces, `tsc --build` with project references, and a code generator script all fit together to keep a large codebase consistent. This phase in particular taught me how to distinguish a genuine unresolved issue from a stale or repeated review by verifying claims directly against the committed tree rather than assuming either side is automatically right, and the same discipline applied again when isolating a failing test as pre-existing rather than assuming it was caused by my own changes, checking it against a clean copy of the upstream branch before ruling it out of scope. Watching a maintainer correct their own repeated review after going back through the code from scratch was also a good reminder that the goal of this back-and-forth was never about being right, it was about the code being correct, and staying evidence-based on my side made it easy to recognize and accept the one point that was.
 
 ### Challenges Overcome
 
