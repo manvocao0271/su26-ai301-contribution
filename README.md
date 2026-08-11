@@ -266,7 +266,7 @@ Focused on the final review pass, one last documentation-accuracy fix, and the P
 **Key commits:** [feat/adapter-amp](https://github.com/manvocao0271/nous-core/tree/feat/adapter-amp)
 
 **Approach decisions:**
-- `session_bound_command` over `persistent_process`: Amp can maintain session context but does not expose a strict long-lived process protocol, matching the Codex CLI precedent in the docs.
+- `session_bound_command` over `persistent_process`: Amp can maintain session context but does not expose a strict long-lived process protocol, matching the Codex CLI precedent in the docs. (Revised in Week 10 to `one_shot_command` after maintainer review, see Pull Request section below.)
 - No `defaultEndpoint`: CLI providers don't communicate over HTTP. Rather than invent a fake URL, the schema was extended to make the field optional for CLI leaves.
 - `ProviderDefinitionLeaf` as `Omit<ProviderDefinition, 'wellKnownProviderId'>`: minimal change that satisfies the contract without requiring the generator to change its catalog type.
 
@@ -275,6 +275,8 @@ Focused on the final review pass, one last documentation-accuracy fix, and the P
 ## Pull Request
 
 **PR Link:** [https://github.com/orthogonalhq/nous-core/pull/415](https://github.com/orthogonalhq/nous-core/pull/415)
+
+**Merge Commit (evidence of merge):** [bc4a9c6](https://github.com/orthogonalhq/nous-core/commit/bc4a9c66506c7cf140aa69c83422204ae79350b5), "Merge pull request #415 from manvocao0271/feat/adapter-amp," authored by maintainer `atlamors` on the `orthogonalhq/nous-core` repository, 19 files changed. Confirms `providers/amp/` (definition, adapter, implementation, provider, index), `amp-provider.test.ts`, and `amp-process-runner.test.ts` landed on the real integration branch, not just displayed as merged in the PR view.
 
 **PR Description:** Adds Amp as a certified CLI provider leaf under `self/subcortex/providers/src/providers/amp/`, wiring the full definition, adapter, implementation, and factory into the `@nous/subcortex-providers` catalog. Extends the provider schema to support local CLI providers with no HTTP endpoint by making `defaultEndpoint` optional, adding `executionCapabilityProfile`, and introducing `ProviderDefinitionLeaf` and `provider-identity.ts` so leaves derive their built-in ID centrally rather than hand-authoring a UUID.
 
@@ -299,7 +301,7 @@ Focused on the final review pass, one last documentation-accuracy fix, and the P
 - Week 10: after the maintainer's from-scratch re-review confirmed the prior four points were already resolved, fixed the one remaining accuracy issue, stale documentation describing the wrong execution profile, verified the actual value was already correct, and updated only the comments. The PR was merged.
 - Not addressed in this PR: two pre-existing `shared-server` typecheck failures surfaced by `defaultEndpoint` becoming optional, and three pre-existing Qwen Code live-runner test failures surfaced after the Week 9 rebase. Both confirmed unrelated to this PR, flagged to the maintainer, and left for the maintainer-owned tracking issues.
 
-**Status:** Merged. PR #415 closed by the maintainer. Original issue #287 closed. Remaining shared-surface work (agent-cli lifecycle, prompt-delivery representation, endpointless-provider schema design) tracked separately under maintainer-owned issues #413 and #414, not outstanding parts of this contribution.
+**Status:** Merged. PR #415 closed by the maintainer, merge commit [bc4a9c6](https://github.com/orthogonalhq/nous-core/commit/bc4a9c66506c7cf140aa69c83422204ae79350b5). Original issue #287 closed. Remaining shared-surface work (agent-cli lifecycle, prompt-delivery representation, endpointless-provider schema design) tracked separately under maintainer-owned issues #413 and #414, not outstanding parts of this contribution.
 
 ---
 
